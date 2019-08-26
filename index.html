@@ -1,0 +1,437 @@
+<html>
+<head>
+	<script type="text/javascript">
+		var mazeHelpers = {};
+mazeHelpers.builder = function(){
+	var board;
+	var entrance = {};
+	var exit = {};
+	var mazeSize;
+
+	// Calculates the actual maze using a simplistic DFS search algorithm that tends to build uninteresting mazes
+	var buildMaze = function(size) {
+		mazeSize = size;
+		var stack = new Array();
+		stack.push(board[size-1][size-1]);
+
+		while(stack.length > 0) {
+			var currCell = stack.pop();
+			while(true) {
+				currCell.isVisited = true;
+
+				var candidates = getCandidates(currCell);
+				if(candidates.length == 0)
+					break;
+
+				var nextCandidate;
+				if(candidates.length == 1) {
+					stack.push(currCell);
+					nextCandidate = candidates[0];
+				}
+				else {
+					stack.push(currCell);
+					var candidateIndex = Math.floor(Math.random()*candidates.length);
+					nextCandidate = candidates[candidateIndex];
+				}
+
+				// delete wall between current cell and next cell
+				deleteWall(currCell, nextCandidate);
+
+				currCell = nextCandidate;
+			}
+		}
+	}
+
+	var getCandidates = function(cell) {
+		var candidates = new Array();
+		// Check North
+		if(cell.row > 0) {
+			if(board[cell.row-1][cell.column].isVisited == false)
+				candidates.push(board[cell.row-1][cell.column]);
+		}
+
+		// Check South
+		if(cell.row < mazeSize-1 ) {
+			if(board[cell.row+1][cell.column].isVisited == false)
+				candidates.push(board[cell.row+1][cell.column]);
+		}
+
+		// Check East
+		if(cell.column> 0) {
+			if(board[cell.row][cell.column-1].isVisited == false)
+				candidates.push(board[cell.row][cell.column-1]);
+		}
+
+		// Check West
+		if(cell.column < mazeSize-1) {
+			if(board[cell.row][cell.column+1].isVisited == false)
+				candidates.push(board[cell.row][cell.column+1]);
+		}
+
+		return candidates;
+	}
+
+	var deleteWall = function(cell1, cell2) {
+		var rowDiff = cell2.row - cell1.row;
+		var colDiff = cell2.column - cell1.column;   
+
+		if(rowDiff == 1) {
+			cell1.walls -= 2;
+			cell2.walls -= 8;
+		} else if (rowDiff == -1) {
+			cell1.walls -= 8;
+			cell2.walls -= 2;
+		} else if (colDiff == 1) {
+			cell1.walls -= 4;
+			cell2.walls -= 1;
+		} else if (colDiff == -1) {
+			cell1.walls -= 1;
+			cell2.walls -= 4;
+		}
+	}
+
+	return {
+		getBoard: function() {
+			return board;
+		},
+
+		getEntrance: function() {
+			return entrance;
+		},
+
+		getExit: function() {
+			return exit;
+		},
+
+		getSize: function() {
+			return mazeSize;
+		},
+
+		initialize: function(size) {
+			board = new Array();
+
+			// Magic numbers determined through trial and error to match the desired layout
+			entrance.x = 0;
+			entrance.y = (size==20) ? 9 : (size==30) ? 14 : (size==40) ? 19 : (size==50) ? 24 : 0;
+
+			// The exit is always the bottom right corner
+			exit.x = size-1;
+			exit.y = size-1;
+
+			// Instantiate the maze structure
+			for(var i=0; i<size; i++) {
+				board.push(new Array(size));
+				for(var j=0; j<size; j++) {
+					// Create the cell
+					board[i][j] = {'row':i, 'column':j,'isVisited':false,'walls':15};
+				}
+			}
+
+			// Calculate the actual maze 
+			buildMaze(size);
+		},
+	}
+}();
+
+var baseSize = 30;
+var colBorders;
+var leftEdges;
+var rightEdges;
+var rowBorders;
+var markers;
+
+
+window.onload = function(){
+	mazeHelpers.builder.initialize(20);
+	var board = mazeHelpers.builder.getBoard();
+	var entrance = mazeHelpers.builder.getEntrance();
+	var exit = mazeHelpers.builder.getExit();
+
+	createMazeElements();
+
+	// document.getElementById(entrance.y + "." + entrance.x).style.backgroundColor = "blue";
+	var broasca = document.createElement("img");
+	broasca.src = "frog.jpg";
+	document.getElementById(entrance.y + "." + entrance.x).appendChild(broasca);
+
+	currX = entrance.x;
+	currY = entrance.y;
+	prevX = currX;
+	prevY = currY;
+	finnish = 0;
+
+	window.addEventListener('keydown', function(e){
+		if(finnish === 0){
+			switch(e.keyCode){
+				case 37:
+					if(!(board[currY][currX].walls & 1)) {
+		                prevX = currX;
+		                prevY = currY;
+		                currX -= 1;
+
+						document.getElementById(currY + "." + currX).appendChild(broasca);
+		                document.getElementById(prevY + "." + prevX).style.backgroundColor = "yellow";
+		            }
+
+					break;
+				case 38:
+					if(!(board[currY][currX].walls & 8)) {
+		                prevX = currX;
+		                prevY = currY;
+		                currY -= 1;
+
+						document.getElementById(currY + "." + currX).appendChild(broasca);
+		                document.getElementById(prevY + "." + prevX).style.backgroundColor = "yellow";
+		            }
+
+					break;
+				case 39:
+					if(!(board[currY][currX].walls & 4)) {
+		                prevX = currX;
+		                prevY = currY;
+		                currX += 1;
+
+						document.getElementById(currY + "." + currX).appendChild(broasca);
+		                document.getElementById(prevY + "." + prevX).style.backgroundColor = "yellow";
+		            }
+
+					break;
+				case 40:
+					if(!(board[currY][currX].walls & 2)) {
+		                prevX = currX;
+		                prevY = currY;
+		                currY += 1;
+
+						document.getElementById(currY + "." + currX).appendChild(broasca);
+		                document.getElementById(prevY + "." + prevX).style.backgroundColor = "yellow";
+		            }
+
+					break;
+			}
+		}
+		if((currX === 19 && currY === 19) && finnish === 0){
+			var win = document.createElement("h1");
+			win.innerHTML="you win";
+			win.id="win-text";
+			document.getElementById("MazeContainer").prepend(win);
+			finnish = 1;
+		}
+	});
+
+}
+
+colBorders = new Array();
+rowBorders = new Array();
+
+function createMazeElements() {
+	// Create the root maze element
+	var maze = document.createElement("div");
+	maze.id = "maze";
+
+	leftEdges = new Array();	
+	rightEdges = new Array();
+	markers = new Array();
+
+	// Create the top maze borders 
+	var lBorderJoint = document.createElement("div");
+	lBorderJoint.className += " border row col";
+	maze.appendChild(lBorderJoint);
+	for(var j=0; j<mazeHelpers.builder.getSize(); j++) {
+		// Create the bottom border
+		var border = document.createElement("div");
+		border.className += " border row";
+		maze.appendChild(border);
+
+		// Create the border joints
+		var joint = document.createElement("div");
+		joint.className += " border row col";
+		maze.appendChild(joint);
+	}   
+
+	// Create the rest of the maze
+	for(var i=0; i<mazeHelpers.builder.getSize(); i++) {
+		colBorders.push(new Array(mazeHelpers.builder.getSize()-1));
+		rowBorders.push(new Array(mazeHelpers.builder.getSize()-1));
+
+		for(var j=0; j<mazeHelpers.builder.getSize(); j++) {
+			// Create the left border if we're on a leftmost cell
+			if(j==0) {
+				var lBorder = document.createElement("div");
+				lBorder.className += " border col";
+				leftEdges.push(lBorder);
+				maze.appendChild(lBorder);
+			}
+
+			// Create the cell
+			var cell = document.createElement("div");
+			cell.className = "cell";
+			cell.id = i + "." + j;
+			maze.appendChild(cell);
+
+			// Create markers to use while solving maze
+			var marker = document.createElement("div");
+			marker.className = "marker";
+			marker.visibility = "hidden";
+			maze.appendChild(marker);
+			markers.push(marker);
+
+			// Create the right maze border
+			var rBorder = document.createElement("div");
+			rBorder.className += " border col";
+			if(j<mazeHelpers.builder.getSize()-1) {
+				colBorders[i][j] = rBorder;
+			} else {
+				rightEdges.push(rBorder);
+			}
+			maze.appendChild(rBorder);
+		}
+
+		// Create the bottom maze borders if we're not on a bottommost row
+		if(i<mazeHelpers.builder.getSize()) {
+			for(var j=0; j<mazeHelpers.builder.getSize(); j++) {
+				// Create the left border joint if we're on a leftmost cell
+				if(j==0) {
+					var lBorderJoint = document.createElement("div");
+					lBorderJoint.className += " border row col";
+					maze.appendChild(lBorderJoint);
+				}
+
+				// Create the bottom border
+				var border = document.createElement("div");
+				border.className += " border row";
+				maze.appendChild(border);
+				if(i<mazeHelpers.builder.getSize()-1) {
+					rowBorders[i][j] = border;
+				}
+
+				// Create the border joints
+				var joint = document.createElement("div");
+				joint.className += " border row col";
+				maze.appendChild(joint);
+			}   
+		}
+	}
+
+	maze.style.width = mazeHelpers.builder.getSize()*(40+2)+2+"px";
+	maze.style.height = mazeHelpers.builder.getSize()*(40+2)+2+"px";
+	document.getElementById("MazeContainer").appendChild(maze);
+
+	maze.style.visibility = "visible";
+	updateWalls();
+}
+
+function updateWalls() {
+    for(var i=0; i<mazeHelpers.builder.getSize(); i++) {
+        for(var j=0; j<mazeHelpers.builder.getSize(); j++) {
+            if(!(mazeHelpers.builder.getBoard()[i][j].walls & 8)) {
+                rowBorders[i-1][j].style.backgroundColor = "white";
+            }
+            if(!(mazeHelpers.builder.getBoard()[i][j].walls & 4)) {
+                colBorders[i][j].style.backgroundColor = "white";
+            }
+            if(!(mazeHelpers.builder.getBoard()[i][j].walls & 2)) {
+                rowBorders[i][j].style.backgroundColor = "white";
+            }
+            if(!(mazeHelpers.builder.getBoard()[i][j].walls & 1)) {
+                colBorders[i][j-1].style.backgroundColor = "white";
+            }
+        }
+    }
+
+	leftEdges[mazeHelpers.builder.getEntrance().y].style.backgroundColor = "white";
+	rightEdges[mazeHelpers.builder.getExit().y].style.backgroundColor = "white";
+}
+	</script>
+	<style type="text/css">
+		/* WOFF font */
+@font-face {
+    font-family: "Pencil Grid";
+    src: url("pencilgrid.woff");
+}
+body
+{
+    position: relative;
+    margin: 0px auto 0px auto;
+    padding: 40px 40px 40px 40px;
+}
+
+/* Main content region */
+html {
+    height: 100%;
+   /* background-image: url("img/bottom.png");*/
+    background-position: bottom;
+    background-repeat: repeat-x;
+    min-height: 820px;
+}
+#MazeContainer{
+    margin: auto;
+}
+
+/* Maze content styles */
+.cell {
+    float: left;
+    margin: 0px;
+    border: 0px;
+    padding: 0px;
+    width: 40px;
+    height: 40px;
+}
+.border {
+    float: left;
+    background: black;
+    width: 40px;
+    height: 40px;
+}
+.row {
+    height: 2px !important;
+}
+.col {
+    width: 2px !important;
+}
+.top {
+    background: blue !important;
+}
+#container {
+    width: 100%;
+}
+#maze {
+    background: white;
+    visibility: hidden;
+    position: relative;
+    margin: auto;
+}
+.marker {
+    width: 6px;
+    height: 6px;
+    position: absolute;
+    border-radius: 3px; 
+    -moz-border-radius: 3px;
+}
+.visited {
+    visibility: visible;
+    background: gray;
+}
+.deadend {
+    visibility: visible;
+    background: red;
+}
+.solution {
+    visibility: visible;
+    background: green;
+}
+#win-text {
+    color:red; 
+    position: relative; 
+    margin: auto;
+    text-align: center;
+    font-size: 200px;
+}
+
+	</style>
+
+</head>
+<body>
+	<div id="MazeContainer">
+</div>
+</body>
+</html>
